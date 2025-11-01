@@ -246,4 +246,48 @@ final class MarkdownosaurTests: XCTestCase {
         XCTAssertTrue(attributedString.string.contains("Test Image"))
         XCTAssertTrue(attributedString.string.contains("Quote text"))
     }
+    
+    func testSetextStyleHeaders() throws {
+        let source = """
+        Main Heading
+        ============
+        
+        Some content here.
+        
+        Subheading
+        ----------
+        
+        More content.
+        """
+        
+        let document = Document(parsing: source)
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: document)
+        
+        XCTAssertTrue(attributedString.length > 0)
+        XCTAssertTrue(attributedString.string.contains("Main Heading"))
+        XCTAssertTrue(attributedString.string.contains("Subheading"))
+        XCTAssertTrue(attributedString.string.contains("Some content here"))
+    }
+    
+    func testEmojisInText() throws {
+        let source = "Here's an emoji 🔰 in text."
+        let document = Document(parsing: source)
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: document)
+        
+        XCTAssertTrue(attributedString.string.contains("🔰"))
+    }
+    
+    func testPlainURLs() throws {
+        let source = "[https://example.com/path](https://example.com/path)"
+        let document = Document(parsing: source)
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: document)
+        
+        XCTAssertTrue(attributedString.length > 0)
+        XCTAssertTrue(attributedString.string.contains("https://example.com/path"))
+    }
 }

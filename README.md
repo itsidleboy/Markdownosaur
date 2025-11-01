@@ -37,6 +37,32 @@ let attributedString = markdownosaur.attributedString(from: document)
 label.attributedText = attributedString
 ```
 
+### Image Support
+
+Markdownosaur now supports images, including GIFs and videos referenced via image syntax. Images are marked with custom attributes that allow you to detect and handle them appropriately:
+
+```swift
+let source = "![Alt Text](https://example.com/image.gif)"
+let document = Document(parsing: source)
+
+var markdownosaur = Markdownosaur()
+let attributedString = markdownosaur.attributedString(from: document)
+
+// Check for images in the attributed string
+attributedString.enumerateAttribute(.imageURL, in: NSRange(location: 0, length: attributedString.length)) { value, range, _ in
+    if let imageURL = value as? URL {
+        // Handle image URL - load and display the image/GIF
+        print("Found image: \(imageURL)")
+    }
+}
+```
+
+The implementation adds these custom attributes:
+- `.imageURL`: The URL of the image
+- `.imageTitle`: The title attribute of the image (if provided)
+
+This allows you to integrate custom image rendering (e.g., using `NSTextAttachment` or custom views) while keeping the library focused on parsing and styling.
+
 ## Performance
 
 It's fast! Tiny bit faster than the `NSAttributedString` implementation in iOS 15 (Apple's implementation is probably more powerful though). For reference on an iPhone 6S Plus (oldest device that still gets iOS 15), I took `test.md` (which is included, and is just the 'Example Result' source above repeated 8x over) and it took about 0.04 seconds on average. This also compares to about 0.1 seconds on average for the same document using HTML -> NSAttributedString conversion via [DTCoreText](https://github.com/Cocoanetics/DTCoreText) (another excellent tool that I was using prior to this that handles a much wider HTML conversion).
