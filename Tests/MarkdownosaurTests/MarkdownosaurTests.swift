@@ -427,4 +427,69 @@ final class MarkdownosaurTests: XCTestCase {
         XCTAssertEqual(smallSize, 12.0, "Small base font size should be 12.0")
         XCTAssertEqual(largeSize, 24.0, "Large base font size should be 24.0")
     }
+    
+    func testImageLoaderCache() throws {
+        let loader = ImageLoader.shared
+        
+        // Clear cache first
+        loader.clearCache()
+        
+        // Test that cache is initially empty
+        let testURL = URL(string: "https://example.com/test.jpg")!
+        let cached = loader.cache.object(forKey: testURL as NSURL)
+        XCTAssertNil(cached, "Cache should be empty initially")
+        
+        // After clearing, cache should work for new entries
+        loader.clearCache()
+        XCTAssertNotNil(loader, "ImageLoader should be initialized")
+    }
+    
+    func testImageURLsInMarkdown() throws {
+        let source = """
+        Here's an image:
+        
+        ![Test Image](https://example.com/image.jpg)
+        
+        And another:
+        
+        ![Another](https://example.com/other.png)
+        """
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        var imageCount = 0
+        var imageURLs: [URL] = []
+        
+        attributedString.enumerateAttribute(.imageURL, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if let url = value as? URL {
+                imageCount += 1
+                imageURLs.append(url)
+            }
+        }
+        
+        XCTAssertEqual(imageCount, 2, "Should find 2 images")
+        XCTAssertEqual(imageURLs.count, 2, "Should have 2 image URLs")
+        XCTAssertTrue(imageURLs.contains(where: { $0.absoluteString.contains("image.jpg") }))
+        XCTAssertTrue(imageURLs.contains(where: { $0.absoluteString.contains("other.png") }))
+    }
+    
+    func testVideoAsImage() throws {
+        let source = "![Video](https://example.com/video.mp4)"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        var foundVideoURL = false
+        attributedString.enumerateAttribute(.imageURL, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if let url = value as? URL {
+                if url.absoluteString.hasSuffix(".mp4") {
+                    foundVideoURL = true
+                }
+            }
+        }
+        
+        XCTAssertTrue(foundVideoURL, "Should detect video URL as image")
+        XCTAssertTrue(attributedString.string.contains("Video"), "Should contain alt text")
+    }
 }

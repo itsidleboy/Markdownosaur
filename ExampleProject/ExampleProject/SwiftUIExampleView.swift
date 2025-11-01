@@ -10,11 +10,11 @@ import Markdownosaur
 
 @available(iOS 13.0, *)
 struct SwiftUIExampleView: View {
-    // Example markdown with various formatting
+    // Example markdown with various formatting and images
     let sampleMarkdown = """
     # Welcome to Markdownosaur
     
-    This is a **SwiftUI** example showing rich text rendering.
+    This is a **SwiftUI** example showing rich text rendering with inline images!
     
     ## Features
     
@@ -22,7 +22,7 @@ struct SwiftUIExampleView: View {
     * Nested lists work great
         * Like this nested item
         * And this one
-    * Images and links too!
+    * Images and videos are displayed inline!
     
     ### Code Support
     
@@ -37,49 +37,76 @@ struct SwiftUIExampleView: View {
     
     #### Links and Images
     
-    Check out [Apple's website](https://apple.com) or view an image:
+    Check out [Apple's website](https://apple.com) or view inline images:
     
-    ![Sample](https://example.com/image.jpg)
+    ![Swift Logo](https://swift.org/assets/images/swift.svg)
+    
+    Images are loaded asynchronously and cached for better performance.
+    
+    ![GitHub Logo](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
     
     ---
     
-    You can adjust the base font size for different reading experiences.
+    You can adjust the base font size and image width for different experiences.
     """
     
     // Example from JSON with escaped newlines
     let jsonMarkdown = "# From JSON\\n\\n**Bold text** with escaped newlines\\n\\n* Item 1\\n* Item 2\\n\\n> Quote from API response"
     
     @State private var selectedSize: CGFloat = 15.0
+    @State private var loadImages: Bool = true
+    @State private var maxImageWidth: CGFloat = 300
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Font size selector
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Base Font Size: \(Int(selectedSize))pt")
-                            .font(.headline)
+                    // Controls
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Font size selector
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Base Font Size: \(Int(selectedSize))pt")
+                                .font(.subheadline)
+                            
+                            Slider(value: $selectedSize, in: 12...24, step: 1)
+                        }
                         
-                        Slider(value: $selectedSize, in: 12...24, step: 1)
-                            .padding(.horizontal)
+                        // Image loading toggle
+                        Toggle("Load Images Inline", isOn: $loadImages)
+                            .font(.subheadline)
+                        
+                        // Image width slider
+                        if loadImages {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Max Image Width: \(Int(maxImageWidth))pt")
+                                    .font(.subheadline)
+                                
+                                Slider(value: $maxImageWidth, in: 150...400, step: 50)
+                            }
+                        }
                     }
                     .padding()
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(8)
                     .padding(.horizontal)
                     
-                    // Regular markdown example
+                    // Regular markdown example with images
                     VStack(alignment: .leading) {
-                        Text("Regular Markdown")
+                        Text("Markdown with Inline Images")
                             .font(.headline)
                             .padding(.horizontal)
                         
-                        MarkdownTextView(text: sampleMarkdown, baseFontSize: selectedSize)
-                            .frame(minHeight: 400)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                            .shadow(radius: 2)
-                            .padding(.horizontal)
+                        MarkdownTextView(
+                            text: sampleMarkdown,
+                            baseFontSize: selectedSize,
+                            loadImages: loadImages,
+                            maxImageWidth: maxImageWidth
+                        )
+                        .frame(minHeight: 500)
+                        .background(Color.white)
+                        .cornerRadius(8)
+                        .shadow(radius: 2)
+                        .padding(.horizontal)
                     }
                     
                     // JSON markdown example
@@ -88,12 +115,17 @@ struct SwiftUIExampleView: View {
                             .font(.headline)
                             .padding(.horizontal)
                         
-                        MarkdownTextView(text: jsonMarkdown, baseFontSize: selectedSize)
-                            .frame(minHeight: 200)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                            .shadow(radius: 2)
-                            .padding(.horizontal)
+                        MarkdownTextView(
+                            text: jsonMarkdown,
+                            baseFontSize: selectedSize,
+                            loadImages: loadImages,
+                            maxImageWidth: maxImageWidth
+                        )
+                        .frame(minHeight: 200)
+                        .background(Color.white)
+                        .cornerRadius(8)
+                        .shadow(radius: 2)
+                        .padding(.horizontal)
                     }
                 }
                 .padding(.vertical)

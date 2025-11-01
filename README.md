@@ -82,9 +82,31 @@ label.attributedText = attributedString
 
 This is particularly useful when receiving markdown content from APIs or JSON files where newlines are represented as `\n` escape sequences.
 
-### Image Support
+### Image and Video Support
 
-Markdownosaur now supports images, including GIFs and videos referenced via image syntax. Images are marked with custom attributes that allow you to detect and handle them appropriately:
+Markdownosaur supports inline images and videos (as images). In SwiftUI, images are automatically loaded and displayed inline:
+
+#### SwiftUI (Automatic Image Loading)
+
+```swift
+// Images are loaded and displayed automatically
+MarkdownTextView(
+    text: "![Logo](https://example.com/logo.png)",
+    loadImages: true,
+    maxImageWidth: 300
+)
+```
+
+**Features:**
+- Automatic async image loading and caching
+- Configurable maximum image width
+- Placeholder shown while loading
+- Support for GIFs and animated images
+- Toggle to disable image loading if needed
+
+#### UIKit (Manual Integration)
+
+For UIKit, images are marked with custom attributes that you can use to load them manually:
 
 ```swift
 let source = "![Alt Text](https://example.com/image.gif)"
@@ -96,17 +118,19 @@ let attributedString = markdownosaur.attributedString(from: document)
 // Check for images in the attributed string
 attributedString.enumerateAttribute(.imageURL, in: NSRange(location: 0, length: attributedString.length)) { value, range, _ in
     if let imageURL = value as? URL {
-        // Handle image URL - load and display the image/GIF
-        print("Found image: \(imageURL)")
+        // Load and display the image using your preferred method
+        ImageLoader.shared.loadImage(from: imageURL) { image in
+            // Create NSTextAttachment and update attributed string
+        }
     }
 }
 ```
 
-The implementation adds these custom attributes:
+**Custom Attributes:**
 - `.imageURL`: The URL of the image
 - `.imageTitle`: The title attribute of the image (if provided)
 
-This allows you to integrate custom image rendering (e.g., using `NSTextAttachment` or custom views) while keeping the library focused on parsing and styling.
+This allows you to integrate custom image rendering (e.g., using `NSTextAttachment` or custom views) with full control over loading and caching.
 
 ## Performance
 
