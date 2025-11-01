@@ -35,6 +35,15 @@ class ImageDemoViewController: UIViewController {
     }
     
     func displayMarkdown() {
+        // Example 1: Using the convenience method with escaped newlines (e.g., from JSON)
+        let jsonMarkdown = "# Markdown from JSON\\n\\n**Bold text** with escaped newlines.\\n\\n![GIF](https://media.tenor.com/uOlZaeZu4fYAAAAC/gwa-testing.gif)"
+        
+        var markdownosaur = Markdownosaur()
+        
+        // This automatically handles \n escape sequences
+        let attributedStringFromJSON = markdownosaur.attributedString(from: jsonMarkdown)
+        
+        // Example 2: Traditional usage with regular string
         let source = """
         # Markdown with Images Demo
         
@@ -61,7 +70,6 @@ class ImageDemoViewController: UIViewController {
         """
         
         let document = Document(parsing: source)
-        var markdownosaur = Markdownosaur()
         let attributedString = markdownosaur.attributedString(from: document)
         
         // Process the attributed string to handle images

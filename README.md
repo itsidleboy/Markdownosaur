@@ -37,6 +37,23 @@ let attributedString = markdownosaur.attributedString(from: document)
 label.attributedText = attributedString
 ```
 
+### Handling Escaped Newlines (from JSON)
+
+If you're loading markdown from JSON or other sources where newlines are escaped as `\n` text (not actual newline characters), you can use the convenience method that automatically handles this:
+
+```swift
+// Markdown from JSON with escaped newlines
+let jsonMarkdown = "What is Lorem Ipsum?\\n--------------------\\n\\n**Lorem Ipsum** is text."
+
+var markdownosaur = Markdownosaur()
+let attributedString = markdownosaur.attributedString(from: jsonMarkdown)
+
+// The escaped \n will be converted to actual newlines for proper parsing
+label.attributedText = attributedString
+```
+
+This is particularly useful when receiving markdown content from APIs or JSON files where newlines are represented as `\n` escape sequences.
+
 ### Image Support
 
 Markdownosaur now supports images, including GIFs and videos referenced via image syntax. Images are marked with custom attributes that allow you to detect and handle them appropriately:

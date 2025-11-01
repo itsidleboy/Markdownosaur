@@ -17,6 +17,14 @@ public struct Markdownosaur: MarkupVisitor {
         return visit(document)
     }
     
+    /// Convenience method that takes a markdown string, handles escaped newlines, parses it, and returns an attributed string
+    public mutating func attributedString(from markdownString: String) -> NSAttributedString {
+        // Handle escaped newlines (e.g., from JSON strings)
+        let processedString = markdownString.replacingOccurrences(of: "\\n", with: "\n")
+        let document = Document(parsing: processedString)
+        return visit(document)
+    }
+    
     mutating public func defaultVisit(_ markup: Markup) -> NSAttributedString {
         let result = NSMutableAttributedString()
         

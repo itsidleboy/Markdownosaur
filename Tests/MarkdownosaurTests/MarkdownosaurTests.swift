@@ -290,4 +290,63 @@ final class MarkdownosaurTests: XCTestCase {
         XCTAssertTrue(attributedString.length > 0)
         XCTAssertTrue(attributedString.string.contains("https://example.com/path"))
     }
+    
+    func testEscapedNewlinesFromJSON() throws {
+        // Simulating markdown from JSON with escaped newlines
+        let source = "What is Lorem Ipsum?\\n--------------------\\n\\n**Lorem Ipsum** is simply dummy text."
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        XCTAssertTrue(attributedString.length > 0)
+        XCTAssertTrue(attributedString.string.contains("What is Lorem Ipsum?"))
+        XCTAssertTrue(attributedString.string.contains("Lorem Ipsum"))
+        
+        // The text should be parsed as a heading (setext style) followed by bold text
+        // Verify bold text is present
+        var foundBold = false
+        attributedString.enumerateAttribute(.font, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if let font = value as? UIFont {
+                if font.fontDescriptor.symbolicTraits.contains(.traitBold) {
+                    foundBold = true
+                }
+            }
+        }
+        XCTAssertTrue(foundBold, "Should have bold text from **Lorem Ipsum**")
+    }
+    
+    func testSingleEscapedNewline() throws {
+        let source = "First line\\nSecond line"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        XCTAssertTrue(attributedString.string.contains("First line"))
+        XCTAssertTrue(attributedString.string.contains("Second line"))
+    }
+    
+    func testDoubleEscapedNewline() throws {
+        let source = "First paragraph\\n\\nSecond paragraph"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        XCTAssertTrue(attributedString.string.contains("First paragraph"))
+        XCTAssertTrue(attributedString.string.contains("Second paragraph"))
+    }
+    
+    func testComplexMarkdownWithEscapedNewlines() throws {
+        // This is similar to the JSON example from the problem statement
+        let source = "# Header\\n\\n**Bold text**\\n\\n*Italic text*\\n\\n> Quote\\n\\n![Image](https://example.com/image.jpg)"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        XCTAssertTrue(attributedString.length > 0)
+        XCTAssertTrue(attributedString.string.contains("Header"))
+        XCTAssertTrue(attributedString.string.contains("Bold text"))
+        XCTAssertTrue(attributedString.string.contains("Italic text"))
+        XCTAssertTrue(attributedString.string.contains("Quote"))
+        XCTAssertTrue(attributedString.string.contains("Image"))
+    }
 }
