@@ -9,11 +9,21 @@ import UIKit
 import Markdown
 
 public struct Markdownosaur: MarkupVisitor {
-    let baseFontSize: CGFloat = 15.0
+    public let baseFontSize: CGFloat
 
-    public init() {}
+    public init(baseFontSize: CGFloat = 15.0) {
+        self.baseFontSize = baseFontSize
+    }
     
     public mutating func attributedString(from document: Document) -> NSAttributedString {
+        return visit(document)
+    }
+    
+    /// Convenience method that takes a markdown string, handles escaped newlines, parses it, and returns an attributed string
+    public mutating func attributedString(from markdownString: String) -> NSAttributedString {
+        // Handle escaped newlines (e.g., from JSON strings)
+        let processedString = markdownString.replacingOccurrences(of: "\\n", with: "\n")
+        let document = Document(parsing: processedString)
         return visit(document)
     }
     
@@ -92,19 +102,77 @@ public struct Markdownosaur: MarkupVisitor {
             result.append(visit(child))
         }
         
-        let url = link.destination != nil ? URL(string: link.destination!) : nil
+        var url = link.destination != nil ? URL(string: link.destination!) : nil
+        
+        // Check if this is a user mention link (e.g., /user/{id})
+        if let destination = link.destination, destination.hasPrefix("/user/") {
+            // Extract user ID from path like /user/664c2f2a9ec522b1fa11c059?profile-tab=profile
+            let components = destination.components(separatedBy: "?")
+            let path = components[0]
+            if let userId = path.components(separatedBy: "/").last {
+                // Store user ID as custom attribute for NavigationLink handling
+                result.addAttribute(.userMention, value: userId)
+                // Create a custom URL scheme for mention links
+                url = URL(string: "mention://\(userId)")
+            }
+        }
         
         result.applyLink(withURL: url)
         
         return result
     }
     
+    mutating public func visitImage(_ image: Image) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        
+        // Process alt text from children
+        for child in image.children {
+            result.append(visit(child))
+        }
+        
+        // If there's a source URL, add it as a custom attribute to mark this as an image
+        // Note: We also add .link so that images are tappable if the consumer wants that behavior
+        if let source = image.source, let url = URL(string: source) {
+            result.addAttribute(.imageURL, value: url)
+            result.addAttribute(.link, value: url)
+            result.addAttribute(.foregroundColor, value: UIColor.systemBlue)
+        }
+        
+        // Store the title attribute if provided
+        if let title = image.title {
+            result.addAttribute(.imageTitle, value: title)
+        }
+        
+        return result
+    }
+    
     mutating public func visitInlineCode(_ inlineCode: InlineCode) -> NSAttributedString {
-        return NSAttributedString(string: inlineCode.code, attributes: [.font: UIFont.monospacedSystemFont(ofSize: baseFontSize - 1.0, weight: .regular), .foregroundColor: UIColor.systemGray])
+        // Improved inline code with background color
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.monospacedSystemFont(ofSize: baseFontSize - 1.0, weight: .regular),
+            .foregroundColor: UIColor.label,
+            .backgroundColor: UIColor.systemGray6
+        ]
+        return NSAttributedString(string: " \(inlineCode.code) ", attributes: attributes)
     }
     
     public func visitCodeBlock(_ codeBlock: CodeBlock) -> NSAttributedString {
-        let result = NSMutableAttributedString(string: codeBlock.code, attributes: [.font: UIFont.monospacedSystemFont(ofSize: baseFontSize - 1.0, weight: .regular), .foregroundColor: UIColor.systemGray])
+        // Improved code block with background and padding
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 4
+        paragraphStyle.paragraphSpacing = 8
+        paragraphStyle.firstLineHeadIndent = 12
+        paragraphStyle.headIndent = 12
+        paragraphStyle.tailIndent = -12
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.monospacedSystemFont(ofSize: baseFontSize - 1.0, weight: .regular),
+            .foregroundColor: UIColor.label,
+            .backgroundColor: UIColor.systemGray6,
+            .paragraphStyle: paragraphStyle
+        ]
+        
+        let result = NSMutableAttributedString(string: "\n\(codeBlock.code)\n", attributes: attributes)
         
         if codeBlock.hasSuccessor {
             result.append(.singleNewline(withFontSize: baseFontSize))
@@ -243,19 +311,23 @@ public struct Markdownosaur: MarkupVisitor {
             
             let baseLeftMargin: CGFloat = 15.0
             let leftMarginOffset = baseLeftMargin + (20.0 * CGFloat(blockQuote.quoteDepth))
+            let borderWidth: CGFloat = 4.0
             
-            quoteParagraphStyle.tabStops = [NSTextTab(textAlignment: .left, location: leftMarginOffset)]
-            
-            quoteParagraphStyle.headIndent = leftMarginOffset
+            quoteParagraphStyle.tabStops = [NSTextTab(textAlignment: .left, location: leftMarginOffset + borderWidth)]
+            quoteParagraphStyle.headIndent = leftMarginOffset + borderWidth + 8
+            quoteParagraphStyle.firstLineHeadIndent = leftMarginOffset + borderWidth + 8
+            quoteParagraphStyle.paragraphSpacing = 4
             
             quoteAttributes[.paragraphStyle] = quoteParagraphStyle
             quoteAttributes[.font] = UIFont.systemFont(ofSize: baseFontSize, weight: .regular)
             quoteAttributes[.listDepth] = blockQuote.quoteDepth
+            quoteAttributes[.backgroundColor] = UIColor.systemGray6
             
             let quoteAttributedString = visit(child).mutableCopy() as! NSMutableAttributedString
             quoteAttributedString.insert(NSAttributedString(string: "\t", attributes: quoteAttributes), at: 0)
             
-            quoteAttributedString.addAttribute(.foregroundColor, value: UIColor.systemGray)
+            // Use a darker gray for quote text instead of systemGray
+            quoteAttributedString.addAttribute(.foregroundColor, value: UIColor.secondaryLabel)
             
             result.append(quoteAttributedString)
         }
@@ -366,6 +438,9 @@ extension BlockQuote {
 extension NSAttributedString.Key {
     static let listDepth = NSAttributedString.Key("ListDepth")
     static let quoteDepth = NSAttributedString.Key("QuoteDepth")
+    static let imageURL = NSAttributedString.Key("ImageURL")
+    static let imageTitle = NSAttributedString.Key("ImageTitle")
+    static let userMention = NSAttributedString.Key("UserMention")
 }
 
 extension NSMutableAttributedString {
