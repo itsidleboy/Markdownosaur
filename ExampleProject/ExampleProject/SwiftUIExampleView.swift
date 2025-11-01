@@ -26,18 +26,18 @@ struct SwiftUIExampleView: View {
     
     ### Code Support
     
-    Inline code like `NSAttributedString` is supported.
+    Inline code like `NSAttributedString` has a nice background.
     
     ```swift
     var markdownosaur = Markdownosaur()
     let result = markdownosaur.attributedString(from: source)
     ```
     
-    > Block quotes look great for callouts and important information.
+    > Block quotes now have improved styling with background color and better indentation for a cleaner look.
     
     #### Links and Images
     
-    Check out [Apple's website](https://apple.com) or view inline images:
+    Check out [Apple's website](https://apple.com) or mention a user like [@communityadmin](/user/664c2f2a9ec522b1fa11c059?profile-tab=profile).
     
     ![Swift Logo](https://swift.org/assets/images/swift.svg)
     
@@ -47,7 +47,7 @@ struct SwiftUIExampleView: View {
     
     ---
     
-    You can adjust the base font size and image width for different experiences.
+    You can adjust the base font size, toggle truncation, and control image loading.
     """
     
     // Example from JSON with escaped newlines
@@ -122,6 +122,28 @@ struct SwiftUIExampleView: View {
                             maxImageWidth: maxImageWidth
                         )
                         .frame(minHeight: 200)
+                        .background(Color.white)
+                        .cornerRadius(8)
+                        .shadow(radius: 2)
+                        .padding(.horizontal)
+                    }
+                    
+                    // Expandable/truncated example
+                    VStack(alignment: .leading) {
+                        Text("With Truncation (5 lines)")
+                            .font(.headline)
+                            .padding(.horizontal)
+                        
+                        ExpandableMarkdownTextView(
+                            text: sampleMarkdown,
+                            baseFontSize: selectedSize,
+                            loadImages: loadImages,
+                            maxImageWidth: maxImageWidth,
+                            lineLimit: 5,
+                            onMentionTap: { userId in
+                                print("User mention tapped: \(userId)")
+                            }
+                        )
                         .background(Color.white)
                         .cornerRadius(8)
                         .shadow(radius: 2)

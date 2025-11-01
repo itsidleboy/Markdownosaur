@@ -132,6 +132,81 @@ attributedString.enumerateAttribute(.imageURL, in: NSRange(location: 0, length: 
 
 This allows you to integrate custom image rendering (e.g., using `NSTextAttachment` or custom views) with full control over loading and caching.
 
+### Advanced Features
+
+#### User Mentions with Navigation
+
+Markdownosaur automatically detects user mention links (e.g., `/user/{id}`) and provides a callback for handling navigation:
+
+```swift
+ExpandableMarkdownTextView(
+    text: "Mention [@user](/user/12345?profile=true)",
+    onMentionTap: { userId in
+        // Navigate to user profile with userId: "12345"
+        navigationController.pushViewController(UserProfileView(userId: userId))
+    }
+)
+```
+
+The user ID is extracted from the URL path and passed to your callback.
+
+#### Truncation with "Read More"
+
+Display long content with automatic truncation and expand/collapse functionality:
+
+```swift
+ExpandableMarkdownTextView(
+    text: longMarkdownContent,
+    lineLimit: 5  // Truncate after 5 lines
+)
+```
+
+**Features:**
+- Automatic "Read more" button when content exceeds line limit
+- "Show less" button to collapse expanded content
+- Smooth animations
+- Detects if content is actually truncated (no button if content fits)
+
+#### Improved UI Styling
+
+- **Code blocks**: Background color with padding and line spacing
+- **Inline code**: Background highlighting for better visibility
+- **Block quotes**: Background color with improved indentation and left border effect
+- **Better copy/paste**: Text selection enabled with proper formatting preservation
+
+### Example with All Features
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        ExpandableMarkdownTextView(
+            text: """
+                # Post Title
+                
+                Here's some content with [@alice](/user/abc123).
+                
+                `Inline code` looks great now!
+                
+                ```swift
+                let code = "with background"
+                ```
+                
+                > Quotes have nice styling too
+                
+                ![Image](https://example.com/img.jpg)
+                """,
+            baseFontSize: 16,
+            loadImages: true,
+            maxImageWidth: 300,
+            lineLimit: 5,
+            onMentionTap: { userId in
+                print("Navigate to user: \(userId)")
+            }
+        )
+    }
+}
+```
+
 ## Performance
 
 It's fast! Tiny bit faster than the `NSAttributedString` implementation in iOS 15 (Apple's implementation is probably more powerful though). For reference on an iPhone 6S Plus (oldest device that still gets iOS 15), I took `test.md` (which is included, and is just the 'Example Result' source above repeated 8x over) and it took about 0.04 seconds on average. This also compares to about 0.1 seconds on average for the same document using HTML -> NSAttributedString conversion via [DTCoreText](https://github.com/Cocoanetics/DTCoreText) (another excellent tool that I was using prior to this that handles a much wider HTML conversion).

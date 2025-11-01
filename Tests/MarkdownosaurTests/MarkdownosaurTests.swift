@@ -492,4 +492,82 @@ final class MarkdownosaurTests: XCTestCase {
         XCTAssertTrue(foundVideoURL, "Should detect video URL as image")
         XCTAssertTrue(attributedString.string.contains("Video"), "Should contain alt text")
     }
+    
+    func testUserMentionLink() throws {
+        let source = "Mention [@user](/user/664c2f2a9ec522b1fa11c059?profile-tab=profile)"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        var foundMention = false
+        var userId: String?
+        
+        attributedString.enumerateAttribute(.userMention, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if let id = value as? String {
+                foundMention = true
+                userId = id
+            }
+        }
+        
+        XCTAssertTrue(foundMention, "Should detect user mention")
+        XCTAssertEqual(userId, "664c2f2a9ec522b1fa11c059", "Should extract correct user ID")
+    }
+    
+    func testImprovedCodeBlockStyling() throws {
+        let source = """
+        ```swift
+        let code = "test"
+        ```
+        """
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        var foundBackground = false
+        
+        attributedString.enumerateAttribute(.backgroundColor, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if value != nil {
+                foundBackground = true
+            }
+        }
+        
+        XCTAssertTrue(foundBackground, "Code blocks should have background color")
+        XCTAssertTrue(attributedString.string.contains("let code"), "Should contain code text")
+    }
+    
+    func testInlineCodeStyling() throws {
+        let source = "This is `inline code` here"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        var foundBackground = false
+        
+        attributedString.enumerateAttribute(.backgroundColor, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if value != nil {
+                foundBackground = true
+            }
+        }
+        
+        XCTAssertTrue(foundBackground, "Inline code should have background color")
+        XCTAssertTrue(attributedString.string.contains("inline code"), "Should contain code text")
+    }
+    
+    func testBlockQuoteStyling() throws {
+        let source = "> This is a quote"
+        
+        var markdownosaur = Markdownosaur()
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        var foundBackground = false
+        
+        attributedString.enumerateAttribute(.backgroundColor, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if value != nil {
+                foundBackground = true
+            }
+        }
+        
+        XCTAssertTrue(foundBackground, "Block quotes should have background color")
+        XCTAssertTrue(attributedString.string.contains("This is a quote"), "Should contain quote text")
+    }
 }

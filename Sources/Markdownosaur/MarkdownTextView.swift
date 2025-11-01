@@ -42,6 +42,10 @@ public struct MarkdownTextView: UIViewRepresentable {
         textView.textContainer.lineFragmentPadding = 0
         textView.textContainer.lineBreakMode = .byWordWrapping
         
+        // Enable selection for better copy/paste support
+        textView.isSelectable = true
+        textView.dataDetectorTypes = [.link]
+        
         return textView
     }
     
