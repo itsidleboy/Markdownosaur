@@ -107,17 +107,15 @@ public struct Markdownosaur: MarkupVisitor {
             result.append(visit(child))
         }
         
-        // If there's a source URL, add it as a link attribute and mark as an image
+        // If there's a source URL, add it as a custom attribute to mark this as an image
+        // Note: We also add .link so that images are tappable if the consumer wants that behavior
         if let source = image.source, let url = URL(string: source) {
-            // Use a special attribute to mark this as an image
             result.addAttribute(.imageURL, value: url)
             result.addAttribute(.link, value: url)
-            
-            // Style as a link with distinct color
             result.addAttribute(.foregroundColor, value: UIColor.systemBlue)
         }
         
-        // If we have a title, we could store it as well
+        // Store the title attribute if provided
         if let title = image.title {
             result.addAttribute(.imageTitle, value: title)
         }
