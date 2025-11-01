@@ -99,6 +99,32 @@ public struct Markdownosaur: MarkupVisitor {
         return result
     }
     
+    mutating public func visitImage(_ image: Image) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        
+        // Process alt text from children
+        for child in image.children {
+            result.append(visit(child))
+        }
+        
+        // If there's a source URL, add it as a link attribute and mark as an image
+        if let source = image.source, let url = URL(string: source) {
+            // Use a special attribute to mark this as an image
+            result.addAttribute(.imageURL, value: url)
+            result.addAttribute(.link, value: url)
+            
+            // Style as a link with distinct color
+            result.addAttribute(.foregroundColor, value: UIColor.systemBlue)
+        }
+        
+        // If we have a title, we could store it as well
+        if let title = image.title {
+            result.addAttribute(.imageTitle, value: title)
+        }
+        
+        return result
+    }
+    
     mutating public func visitInlineCode(_ inlineCode: InlineCode) -> NSAttributedString {
         return NSAttributedString(string: inlineCode.code, attributes: [.font: UIFont.monospacedSystemFont(ofSize: baseFontSize - 1.0, weight: .regular), .foregroundColor: UIColor.systemGray])
     }
@@ -366,6 +392,8 @@ extension BlockQuote {
 extension NSAttributedString.Key {
     static let listDepth = NSAttributedString.Key("ListDepth")
     static let quoteDepth = NSAttributedString.Key("QuoteDepth")
+    static let imageURL = NSAttributedString.Key("ImageURL")
+    static let imageTitle = NSAttributedString.Key("ImageTitle")
 }
 
 extension NSMutableAttributedString {
