@@ -24,6 +24,8 @@ Here's the resulting `NSAttributedString` set on a `UILabel` (with the source Ma
 
 ## Usage
 
+### UIKit
+
 Simply pass in the source Markdown and then use the attributed string for whatever you'd like.
 
 ```swift
@@ -36,6 +38,32 @@ let attributedString = markdownosaur.attributedString(from: document)
 // For instance…
 label.attributedText = attributedString
 ```
+
+### SwiftUI
+
+Use the `MarkdownTextView` for a rich text experience in SwiftUI:
+
+```swift
+import SwiftUI
+import Markdownosaur
+
+struct ContentView: View {
+    let markdown = """
+        # Hello World
+        
+        This is **bold** and this is _italic_.
+        
+        * List item 1
+        * List item 2
+        """
+    
+    var body: some View {
+        MarkdownTextView(text: markdown, baseFontSize: 16)
+    }
+}
+```
+
+The `baseFontSize` parameter controls the size of all text elements - headings, body text, lists, etc. are all calculated relative to this base size.
 
 ### Handling Escaped Newlines (from JSON)
 

@@ -9,9 +9,11 @@ import UIKit
 import Markdown
 
 public struct Markdownosaur: MarkupVisitor {
-    let baseFontSize: CGFloat = 15.0
+    public let baseFontSize: CGFloat
 
-    public init() {}
+    public init(baseFontSize: CGFloat = 15.0) {
+        self.baseFontSize = baseFontSize
+    }
     
     public mutating func attributedString(from document: Document) -> NSAttributedString {
         return visit(document)

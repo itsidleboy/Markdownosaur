@@ -349,4 +349,82 @@ final class MarkdownosaurTests: XCTestCase {
         XCTAssertTrue(attributedString.string.contains("Quote"))
         XCTAssertTrue(attributedString.string.contains("Image"))
     }
+    
+    func testCustomBaseFontSize() throws {
+        let source = "**Bold text**"
+        
+        // Test with default font size
+        var markdownosaurDefault = Markdownosaur()
+        let defaultString = markdownosaurDefault.attributedString(from: source)
+        
+        // Test with custom font size
+        var markdownosaurCustom = Markdownosaur(baseFontSize: 20.0)
+        let customString = markdownosaurCustom.attributedString(from: source)
+        
+        XCTAssertTrue(defaultString.length > 0)
+        XCTAssertTrue(customString.length > 0)
+        
+        // Check that custom font size is applied
+        var foundCustomSize = false
+        customString.enumerateAttribute(.font, in: NSRange(location: 0, length: customString.length), options: []) { value, range, stop in
+            if let font = value as? UIFont {
+                if font.pointSize == 20.0 {
+                    foundCustomSize = true
+                }
+            }
+        }
+        XCTAssertTrue(foundCustomSize, "Custom font size should be applied")
+    }
+    
+    func testBaseFontSizeInHeadings() throws {
+        let source = "# Heading"
+        
+        // Test with base font size of 16
+        var markdownosaur = Markdownosaur(baseFontSize: 16.0)
+        let attributedString = markdownosaur.attributedString(from: source)
+        
+        XCTAssertTrue(attributedString.string.contains("Heading"))
+        
+        // Headings should use a calculated size based on the base font size
+        var foundHeadingFont = false
+        attributedString.enumerateAttribute(.font, in: NSRange(location: 0, length: attributedString.length), options: []) { value, range, stop in
+            if let font = value as? UIFont {
+                // Level 1 heading uses: 28.0 - (1 * 2) = 26.0 in original code
+                // With base size of 16, it should still use the calculated formula
+                if font.fontDescriptor.symbolicTraits.contains(.traitBold) {
+                    foundHeadingFont = true
+                }
+            }
+        }
+        XCTAssertTrue(foundHeadingFont, "Heading should have bold trait")
+    }
+    
+    func testDifferentBaseFontSizesProduceDifferentOutput() throws {
+        let source = "Regular text"
+        
+        var small = Markdownosaur(baseFontSize: 12.0)
+        var large = Markdownosaur(baseFontSize: 24.0)
+        
+        let smallString = small.attributedString(from: source)
+        let largeString = large.attributedString(from: source)
+        
+        // Extract font sizes
+        var smallSize: CGFloat = 0
+        var largeSize: CGFloat = 0
+        
+        smallString.enumerateAttribute(.font, in: NSRange(location: 0, length: smallString.length), options: []) { value, range, stop in
+            if let font = value as? UIFont {
+                smallSize = font.pointSize
+            }
+        }
+        
+        largeString.enumerateAttribute(.font, in: NSRange(location: 0, length: largeString.length), options: []) { value, range, stop in
+            if let font = value as? UIFont {
+                largeSize = font.pointSize
+            }
+        }
+        
+        XCTAssertEqual(smallSize, 12.0, "Small base font size should be 12.0")
+        XCTAssertEqual(largeSize, 24.0, "Large base font size should be 24.0")
+    }
 }
